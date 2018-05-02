@@ -3,9 +3,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 # number of neurons in each layer
-input_num_units = 6
+input_num_units = 12
 hidden_num_units = 3
-output_num_units = 6
+output_num_units = 12
 
 # define placeholders
 x = tf.placeholder(tf.float32, [None, input_num_units])
@@ -35,9 +35,9 @@ cost = tf.reduce_mean(tf.square(output_layer-y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 init = tf.global_variables_initializer()
 #batch_x = np.matrix([[0,1,2,3],[4,5,6,7],[8,9,10,11]])
-batch_x = np.matrix([[0,1,2,3,4,5],[6,7,8,9,10,11]])
+batch_x = np.matrix([[0,1,2,3,4,5,6,7,8,9,10,11]])
 #batch_y = np.matrix([[1 ,1.5 ,4 ,3.3] ,[6 ,5.9 ,7.5 ,6] ,[7 ,6.8 ,8.3 ,9 ]])
-batch_y = np.matrix([[1,1.5,4,3.3,6,5.9],[7.5,6,7,6.8,8.3,9.9]])
+batch_y = np.matrix([[1,1.5,4,3.3,6,5.9,7.5,6,7,6.8,8.3,9.9]])
 with tf.Session() as sess:
     # create initialized variables
     sess.run(init)
