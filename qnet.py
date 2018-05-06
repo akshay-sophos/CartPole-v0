@@ -185,7 +185,7 @@ with tf.Session() as sess:
 
         #if(tot_rew < NEG_REW+20 and ep >NUM_EPISODES/2):
             #ep =0
-
+################################################################################
         def vizAngleAction():
             from mpl_toolkits.mplot3d import Axes3D
             fig = plt.figure()
@@ -248,10 +248,12 @@ with tf.Session() as sess:
             elif disp == 2:
                 ax.set_xlabel('theta_d')
                 ax.set_ylabel('theta')
-            plt.show()
-
+            x = 'a'+str(int(ep/500))+'.png'
+            plt.savefig('C:/Users/admin/Desktop/TFphoto/'+x)
+            #plt.show()
+################################################################################
         if(ep%500 ==0):
-            if 0:
+            if 1:
                 vizAngleAction()
 
         if(ep%10 == 0):
@@ -261,12 +263,15 @@ with tf.Session() as sess:
         ep = ep+1
 
 # To plot Reward and Cost w.r.t time
+
     f, axarr = plt.subplots(2, sharex=True)
     axarr[0].plot(cost_plot)
     axarr[0].set_title('cost_plot')
+    axarr[0].set_ylim([0, 1])
     axarr[1].plot(reward_plot)
     axarr[1].set_title('reward_plot')
+
     plt.show()
-    #saver = tf.train.Saver()
-    #saver.save(sess, 'my-test-model')
+    saver = tf.train.Saver()
+    saver.save(sess, 'C:/Users/admin/Desktop/Sessio/model')
     print("\n Training Over")
