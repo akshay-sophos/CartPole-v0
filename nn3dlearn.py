@@ -20,12 +20,30 @@ def hello():
 
 
 cost_plot = []
+seed = 1
 input_num_units = 2
-hidden_num_units1 = 6
-hidden_num_units2 = 6
+hidden_num_units1 = 2
+hidden_num_units2 = 2
 output_num_units = 1
 tf_x = tf.placeholder(tf.float32, [None, input_num_units],name="Input")
 tf_exp_q =  tf.placeholder(tf.float32,[1,1],name="Expected_Q_value")
+# weights = {
+#     'hidden1': tf.Variable(tf.random_normal([input_num_units, hidden_num_units1], seed=seed)),
+#     'hidden2': tf.Variable(tf.random_normal([hidden_num_units1, hidden_num_units2], seed=seed)),
+#     'output': tf.Variable(tf.random_normal([hidden_num_units2, output_num_units], seed=seed))
+# }
+#
+# biases = {
+#     'hidden1': tf.Variable(tf.random_normal([hidden_num_units1], seed=seed)),
+#     'hidden2': tf.Variable(tf.random_normal([hidden_num_units2], seed=seed)),
+#     'output': tf.Variable(tf.random_normal([output_num_units], seed=seed))
+# }
+#
+# hidden_layer1 = tf.add(tf.matmul(tf_x, weights['hidden1']), biases['hidden1'])
+# hidden_layer1 = tf.nn.relu(hidden_layer1)
+# hidden_layer2 = tf.add(tf.matmul(hidden_layer1, weights['hidden2']), biases['hidden2'])
+# hidden_layer2 = tf.nn.leaky_relu(hidden_layer2,alpha=0.2)
+# output_layer = tf.matmul(hidden_layer2, weights['output']) + biases['output']
 hidden_layer1 = tf.layers.dense(tf_x, hidden_num_units1, tf.nn.relu)
 hidden_layer2 = tf.layers.dense(hidden_layer1, hidden_num_units2, tf.nn.relu)
 output_layer = tf.layers.dense(hidden_layer2, output_num_units)
@@ -36,7 +54,7 @@ train_op = optimizer.minimize(cost)
 with tf.Session() as sess:
 	sess.run(tf.global_variables_initializer())
 	ep = 0
-	final = 10
+	final = 20
 	while ep<=final:
 		co = 0
 		for t in range(1000):
@@ -44,9 +62,14 @@ with tf.Session() as sess:
 			y = random.uniform(-5,5)
 			qw = (np.append(x,y))
 			mn = np.sin(np.sqrt(x**2 + y**2))
+			if t == 0:
+				I =qw
+				Z = mn
+			I = np.vstack([I,qw])
+			Z = np.vstack([Z,mn])
 			_,c = sess.run([train_op,cost],{tf_x:qw.reshape(1,2),tf_exp_q:mn.reshape(1,1)})
-			co += c
-		cost_plot = np.append(cost_plot,co)
+			#co += c
+		cost_plot = np.append(cost_plot,c)#o)
 		print("cost",c," Ep",ep)
 		def vizAngleAction():
 			fig = plt.figure(ep)
