@@ -18,15 +18,15 @@ START_DISCOUNT_FACTOR = 0 #The min discount_factor
 MAX_DISCOUNT_FACTOR = 0.99  #The max discount_factor
 PULL_UP_DISC_FACTOR = 1
 
-TF_LEARN_RATE = 0.001 #Learning Rate for Gradient Descent
+TF_LEARN_RATE = 0.01 #Learning Rate for Gradient Descent
 
 #### Defining the simulation related constants ####
 
 #Defines the number of episodes it should perform the increment/decrement of values
-NUM_EPISODES = 1000
-NUM_EPISODES_PLATEAU_EXPLORE = 800
-NUM_EPISODES_PLATEAU_LEARNING = 500
-NUM_EPISODES_PLATEAU_DISCOUNT = 500
+NUM_EPISODES = 5000
+NUM_EPISODES_PLATEAU_EXPLORE = 3000
+NUM_EPISODES_PLATEAU_LEARNING = 2000
+NUM_EPISODES_PLATEAU_DISCOUNT = 2000
 
 STREAK_TO_END = 120
 SOLVED_T = 199          # anything more than this returns Done = true for the openAI Gym
@@ -39,8 +39,8 @@ if DISPLAY_ENV ==True:
 
 # number of neurons in each layer
 input_num_units = 5
-hidden_num_units1 = 3
-hidden_num_units2 = 3
+hidden_num_units1 = 100
+hidden_num_units2 = 100
 output_num_units = 1
 
 def pcom(s):
@@ -84,7 +84,7 @@ if DISPLAY_RATES:
 tf_x = tf.placeholder(tf.float32, [None, input_num_units],name="Input")
 #y = tf.placeholder(tf.float32, [1, output_num_units],name="Output")
 # tf_qval = tf.placeholder(tf.float32,[1,1],name="Q_value")
-tf_exp_q =  tf.placeholder(tf.float32,[1,1],name="Expected_Q_value")
+tf_exp_q =  tf.placeholder(tf.float32,[None,1],name="Expected_Q_value")
 
 if 0:
     weights = {
@@ -104,7 +104,7 @@ if 0:
 else:
     hidden_layer1 = tf.layers.dense(tf_x, hidden_num_units1, tf.nn.tanh)
     hidden_layer2 = tf.layers.dense(hidden_layer1, hidden_num_units2, tf.nn.relu)
-    output_layer = tf.layers.dense(hidden_layer2, output_num_units, tf.nn.relu)
+    output_layer = tf.layers.dense(hidden_layer2, output_num_units)
 
 cost = tf.losses.mean_squared_error(tf_exp_q, output_layer)
 optimizer = tf.train.AdamOptimizer(TF_LEARN_RATE)
@@ -168,23 +168,30 @@ with tf.Session() as sess:
             # pcom(action)
             # print ("curQval ", curQval, " action ", action)
             nextMaxQval,_ = Q(observation, True)
-
             if done == True and tot_rew<199:
                 reward = NEG_REW
-
             exp_qVal = (1-learning_rate)* curQval  + learning_rate*( reward + discount_factor*nextMaxQval )
             action_array = np.asarray(action).reshape([1,1])
             exp_qVal_array = np.asarray(exp_qVal).reshape([1,1])
-            _,c = sess.run([train_op,cost], {tf_x: np.append(pobs, action_array)[np.newaxis], tf_exp_q: exp_qVal_array})
+            inpu = np.append(pobs,action_array)[np.newaxis]
+            if t==0:
+                I = inpu
+                Z = exp_qVal_array
+            else:
+                I = np.vstack([I,inpu])
+                Z = np.vstack([Z,exp_qVal_array])
+            #_,c = sess.run([train_op,cost], {tf_x: np.append(pobs, action_array)[np.newaxis], tf_exp_q: exp_qVal_array})
             #c1 = sess.run([cost], {tf_x: np.append(pobs, action_array)[np.newaxis], tf_exp_q: exp_qVal_array})
             # print('c c1 ',c, ' ', c1)
-            tot_cost += c
+            #tot_cost += c
             tot_rew +=reward
             if done == True:
                 break
-
+        _,c = sess.run([train_op,cost], {tf_x: I, tf_exp_q: Z})
         #if(tot_rew < NEG_REW+20 and ep >NUM_EPISODES/2):
             #ep =0
+            #if(tot_cost >0.2500 and ep >NUM_EPISODES-1000):
+                #ep =0
 ################################################################################
         def vizAngleAction():
             from mpl_toolkits.mplot3d import Axes3D
@@ -239,27 +246,29 @@ with tf.Session() as sess:
                 axis3 = np.subtract( qval1[0].reshape(theta_d_grid,theta_grid), qval0[0].reshape(theta_d_grid,theta_grid) )
 
                 # qval = sess.run([output_layer], {tf_x:[x_m, theta_m, theta_d_m, x_d_m, a_m][:,np.newaxis]})
-            surf = ax.plot_surface(axis1, axis2, axis3,
+            surf = ax.plot_surface(axis1, axis2, axis3,cmap= (cm.coolwarm if (j==0) else cm.seismic), linewidth=0, antialiased=False)
                 # cmap= cm.seismic, linewidth=0, antialiased=False)
-                cmap= (cm.coolwarm if (j==0) else cm.seismic), linewidth=0, antialiased=False)
+
             if disp == 1:
                 ax.set_xlabel('x')
                 ax.set_ylabel('theta')
             elif disp == 2:
                 ax.set_xlabel('theta_d')
                 ax.set_ylabel('theta')
+
+
             x = 'a'+str(int(ep/500))+'.png'
             plt.savefig('C:/Users/admin/Desktop/TFphoto/'+x)
             #plt.show()
 ################################################################################
-        if(ep%500 ==0):
+        if(ep==NUM_EPISODES):#%500 ==0):
             if 1:
                 vizAngleAction()
 
         if(ep%10 == 0):
-            cost_plot = np.append(cost_plot,tot_cost)
+            cost_plot = np.append(cost_plot,c)#tot_cost)
             reward_plot = np.append(reward_plot, tot_rew)
-        print(ep, "T_Cost:%.4f" %tot_cost,  "T_Reward:%d" %tot_rew)
+        print(ep, "T_Cost:%.4f" %c,  "T_Reward:%d" %tot_rew)
         ep = ep+1
 
 # To plot Reward and Cost w.r.t time
