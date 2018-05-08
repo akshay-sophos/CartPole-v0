@@ -15,18 +15,18 @@ def hello():
 	X, Y = np.meshgrid(X, Y)
 	Z = np.sin(np.sqrt(X**2 + Y**2))
 	surf = ax.plot_surface(X, Y, Z)
-	plt.savefig('C:/Users/admin/Desktop/3Dphoto/actual.png')
+	#plt.savefig('C:/Users/admin/Desktop/3Dphoto/actual.png')
 	plt.show()
 
 
 cost_plot = []
 seed = 1
 input_num_units = 2
-hidden_num_units1 = 2
-hidden_num_units2 = 2
+hidden_num_units1 = 55
+hidden_num_units2 = 55
 output_num_units = 1
 tf_x = tf.placeholder(tf.float32, [None, input_num_units],name="Input")
-tf_exp_q =  tf.placeholder(tf.float32,[1,1],name="Expected_Q_value")
+tf_exp_q =  tf.placeholder(tf.float32,[None,1],name="Expected_Q_value")
 # weights = {
 #     'hidden1': tf.Variable(tf.random_normal([input_num_units, hidden_num_units1], seed=seed)),
 #     'hidden2': tf.Variable(tf.random_normal([hidden_num_units1, hidden_num_units2], seed=seed)),
@@ -54,10 +54,11 @@ train_op = optimizer.minimize(cost)
 with tf.Session() as sess:
 	sess.run(tf.global_variables_initializer())
 	ep = 0
-	final = 20
+	final = 50000
+	row = 20
 	while ep<=final:
 		co = 0
-		for t in range(1000):
+		for t in range(row):
 			x = random.uniform(-5,5)
 			y = random.uniform(-5,5)
 			qw = (np.append(x,y))
@@ -65,10 +66,12 @@ with tf.Session() as sess:
 			if t == 0:
 				I =qw
 				Z = mn
-			I = np.vstack([I,qw])
-			Z = np.vstack([Z,mn])
-			_,c = sess.run([train_op,cost],{tf_x:qw.reshape(1,2),tf_exp_q:mn.reshape(1,1)})
+			if t!=0:
+				I = np.vstack([I,qw])
+				Z = np.vstack([Z,mn])
+		_,c = sess.run([train_op,cost],{tf_x:I,tf_exp_q:Z})#.reshape(row,1)})
 			#co += c
+		#print(I,I.shape,"hey",Z)
 		cost_plot = np.append(cost_plot,c)#o)
 		print("cost",c," Ep",ep)
 		def vizAngleAction():
@@ -83,15 +86,16 @@ with tf.Session() as sess:
 			X = x_m.reshape(40,40)
 			Y = y_m.reshape(40,40)
 			Z = z.reshape(40,40)
-			surf = ax.plot_surface(X,Y,Z,linewidth=0, antialiased=False)
+			surf = ax.plot_surface(X,Y,Z)
 			ax.set_xlabel('X axis')
 			ax.set_ylabel('Y axis')
 		if ep == final:
 			vizAngleAction()
 			x = 'a'+str(int(ep))+'.png'
 			plt.savefig('C:/Users/admin/Desktop/3Dphoto/'+x)
+			plt.show()
 		if ep == final:
 			fig = plt.figure("Cost")
-			plt.plot( cost_plot)
+			plt.plot( cost_plot,'ro')
 			plt.savefig('C:/Users/admin/Desktop/3Dphoto/cost.png')
 		ep = ep+1
